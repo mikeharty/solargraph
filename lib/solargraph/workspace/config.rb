@@ -71,6 +71,14 @@ module Solargraph
         raw_data['require']
       end
 
+      # An option which if true will add RubyGem's
+      # GEM_PATH to the required paths.
+      #
+      # @return [boolean]
+      def require_gem_paths
+        raw_data['require_gem_paths'] || false
+      end
+
       # An array of load paths for required paths.
       #
       # @return [Array<String>]
@@ -159,6 +167,7 @@ module Solargraph
               'extra_args' =>[]
             }
           },
+          'require_gem_paths' => false,
           'require_paths' => [],
           'plugins' => [],
           'max_files' => MAX_FILES

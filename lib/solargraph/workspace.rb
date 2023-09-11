@@ -157,6 +157,24 @@ module Solargraph
       end
     end
 
+    # Ask RubyGems for the default require paths for the workspace's gems.
+    #
+    # @return [Array<String>]
+    def default_gem_paths
+      cmd = %w[gem env path]
+      o, e, s = Open3.capture3(*cmd)
+      if s.success?
+        begin
+          o && !o.empty? ? o.split(File::PATH_SEPARATOR) : []
+        rescue StandardError => e
+          Solargraph.logger.warn "Error reading #{file}: [#{e.class}] #{e.message}"
+        end
+      else
+        Solargraph.logger.warn "Error reading #{file}"
+        Solargraph.logger.warn e
+      end
+    end
+
     # Generate require paths from gemspecs if they exist or assume the default
     # lib directory.
     #
@@ -185,20 +203,20 @@ module Solargraph
           Solargraph.logger.warn e
         end
       end
-      result.concat(config.require_paths.map { |p| File.join(directory, p) })
-      result.push File.join(directory, 'lib') if result.empty?
-      result
+      result.concat configured_require_paths(result)
     end
 
     # Get additional require paths defined in the configuration.
     #
     # @return [Array<String>]
-    def configured_require_paths
-      return ['lib'] if directory.empty?
-      return [File.join(directory, 'lib')] if config.require_paths.empty?
-      config.require_paths.map{|p| File.join(directory, p)}
-    end
+    def configured_require_paths(gemspec_gems = [])
+      paths = config.require_gem_paths ? default_gem_paths : []
+      return paths.push(['lib']) if directory.empty? && gemspec_gems.empty?
+      return paths.push([File.join(directory, 'lib')]) if config.require_paths.empty? && gemspec_gems.empty?
 
+      paths.concat(config.require_paths.map { |p| p.start_with?('/') ? p : File.join(directory, p) })
+    end
+    
     def require_plugins
       config.plugins.each do |plugin|
         begin
