@@ -165,7 +165,7 @@ module Solargraph
       o, e, s = Open3.capture3(*cmd)
       if s.success?
         begin
-          o && !o.empty? ? o.split(File::PATH_SEPARATOR) : []
+          o && !o.empty? ? o.gsub(/\n$/, '').split(File::PATH_SEPARATOR) : []
         rescue StandardError => e
           Solargraph.logger.warn "Error reading #{file}: [#{e.class}] #{e.message}"
         end
